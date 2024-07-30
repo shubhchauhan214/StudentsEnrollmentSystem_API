@@ -6,7 +6,7 @@ from typing import Annotated, Optional
 from database import get_db
 from models import Course
 
-router=APIRouter()
+router = APIRouter()
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
@@ -16,7 +16,7 @@ class CourseRequest(BaseModel):
     description = Optional[str] = Field(None, example="Basic Math Course")
 
 
-# POST METHOD// Create new student
+# POST METHOD// Create new course
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_student(db: db_dependency, course_request: CourseRequest):
     student_model = Course(**course_request.dict())
