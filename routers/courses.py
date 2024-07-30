@@ -33,7 +33,7 @@ async def all_courses(db: db_dependency):
 
 # Read data using id
 @router.get("/course/{course_id}", status_code=status.HTTP_200_OK)
-async def course_by_id(db:db_dependency, course_id: int = Path(gt=0)):
+async def course_by_id(db: db_dependency, course_id: int = Path(gt=0)):
     course_model = db.query(Course).filter(Course.id == course_id).first()
     if course_model is not None:
         return course_model
