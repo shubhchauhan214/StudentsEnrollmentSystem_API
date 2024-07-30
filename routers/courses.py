@@ -18,24 +18,24 @@ class CourseRequest(BaseModel):
 
 # POST METHOD// Create new student
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_student(db: db_dependency, student_request: StudentRequest):
-    student_model = Student(**student_request.dict())
+async def create_student(db: db_dependency, course_request: CourseRequest):
+    student_model = Course(**course_request.dict())
 
     db.add(student_model)
     db.commit()
 
 
 # Get all Data
-@router.get("/student", status_code=status.HTTP_200_OK)
-async def read_students(db: db_dependency):
-    return db.query(Student).all()
+@router.get("/course", status_code=status.HTTP_200_OK)
+async def all_courses(db: db_dependency):
+    return db.query(Course).all()
 
 
 # Read data using id
-@router.get("/student/{student_id}", status_code=status.HTTP_200_OK)
-async def read_students_id(db:db_dependency, student_id: int = Path(gt=0)):
-    student_model = db.query(Student).filter(Student.id == student_id).first()
-    if student_model is not None:
-        return student_model
-    raise HTTPException(status_code=404, detail='Student not found')
+@router.get("/course/{course_id}", status_code=status.HTTP_200_OK)
+async def course_by_id(db:db_dependency, course_id: int = Path(gt=0)):
+    course_model = db.query(Course).filter(Course.id == course_id).first()
+    if course_model is not None:
+        return course_model
+    raise HTTPException(status_code=404, detail='Course not available')
 
