@@ -1,13 +1,13 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
-
+from pydantic import BaseModel
+from typing import List
+from sqlalchemy.orm import Session
+from fastapi import Path
+from models import Enrollment, Student, Course  # Import the necessary models
 from database import get_db
-from pydantic import BaseModel, Field
-
-from models import Enrollment, Student, Course
+from routers.courses import CourseOut  # Import the CourseOut model
+from routers.students import StudentOut  # Import the StudentOut model
 
 router = APIRouter()
 
@@ -36,15 +36,13 @@ def drop_student(enrollment: EnrollmentCreate, db: Session = Depends(get_db)):
     return {"detail": "Enrollment removed"}
 
 
-@router.get("/students/{student_id}/courses/", response_model=List[Course])
+@router.get("/students/{student_id}/courses/", response_model=List[CourseOut])
 def get_student_courses(student_id: int = Path(..., title="The ID of the student to retrieve courses for", gt=0)\
                         , db: Session = Depends(get_db)):
     return db.query(Course).join(Enrollment).filter(Enrollment.student_id == student_id).all()
 
 
-@router.get("/courses/{course_id}/students/", response_model=List[Student])
+@router.get("/courses/{course_id}/students/", response_model=List[StudentOut])  # Change here to use StudentOut
 def get_course_students(course_id: int = Path(..., title="The ID of the course to retrieve students for", gt=0)\
                         , db: Session = Depends(get_db)):
     return db.query(Student).join(Enrollment).filter(Enrollment.course_id == course_id).all()
-
-

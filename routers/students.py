@@ -1,45 +1,51 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
-
-from database import get_db
 from pydantic import BaseModel, Field
-
+from typing import List
+from sqlalchemy.orm import Session
+from fastapi import Path
 from models import Student
+from database import get_db
 
-router=APIRouter()
-
-db_dependency = Annotated[Session, Depends(get_db)]
-
-
-class StudentRequest(BaseModel):
-    name: str = Field(..., example="Shubham Chauhan")
-    email: str = Field(..., example="shubham.chauhan@example.com")
+router = APIRouter()
 
 
-# POST METHOD// Create new student
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_student(db: db_dependency, student_request: StudentRequest):
-    student_model = Student(**student_request.dict())
+class StudentBase(BaseModel):
+    name: str = Field(..., example="John Doe")
+    email: str = Field(..., example="john.doe@example.com")
 
-    db.add(student_model)
+
+class StudentCreate(StudentBase):
+    pass
+
+
+class StudentOut(StudentBase):
+    id: int
+
+    class Config:
+        orm_mode: True
+
+
+@router.post("/", response_model=StudentOut, status_code=status.HTTP_201_CREATED)
+def create_student(student: StudentCreate, db: Session = Depends(get_db)):
+    db_student = Student(name=student.name, email=student.email)
+    db.add(db_student)
     db.commit()
+    db.refresh(db_student)
+    return db_student
 
 
-# Get all Data
-@router.get("/student", status_code=status.HTTP_200_OK)
-async def read_students(db: db_dependency):
-    return db.query(Student).all()
+@router.get("/", response_model=List[StudentOut])
+def read_students(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    return db.query(Student).offset(skip).limit(limit).all()
 
 
-# Read data using id
-@router.get("/student/{student_id}", status_code=status.HTTP_200_OK)
-async def read_students_id(db:db_dependency, student_id: int = Path(gt=0)):
-    student_model = db.query(Student).filter(Student.id == student_id).first()
-    if student_model is not None:
-        return student_model
-    raise HTTPException(status_code=404, detail='Student not found')
+@router.get("/{student_id}", response_model=StudentOut)
+def read_student(student_id: int = Path(..., title="The ID of the student to retrieve", gt=0)\
+                 , db: Session = Depends(get_db)):
+    db_student = db.query(Student).filter(Student.id == student_id).first()
+    if db_student is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+    return db_student
 
 

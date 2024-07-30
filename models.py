@@ -20,10 +20,11 @@ class Course(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(Text)
-    available_seats = Column(Integer)
+    available_seats = Column(Integer, default=0)
 
     # Relationship with students via enrollments
     enrolled_students = relationship("Student", secondary="enrollments", back_populates="enrolled_courses")
+
 
 class Enrollment(Base):
     __tablename__ = 'enrollments'
